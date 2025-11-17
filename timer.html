@@ -1,0 +1,632 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pomodoro Timer для Студентів</title>
+    <style>
+        /* ===== БАЗОВІ СТИЛІ ===== */
+        /* Скидання стандартних відступів та налаштування шрифту */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            transition: background-color 0.3s ease, color 0.3s ease;
+        }
+
+        /* ===== СВІТЛА ТЕМА (За замовчуванням) ===== */
+        body.light-theme {
+            background: linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%);
+            color: #333;
+        }
+
+        /* ===== ТЕМНА ТЕМА ===== */
+        body.dark-theme {
+            background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
+            color: #ecf0f1;
+        }
+
+        /* ===== КОНТЕЙНЕР ДОДАТКУ ===== */
+        .container {
+            background: rgba(255, 255, 255, 0.95);
+            padding: 50px;
+            border-radius: 30px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
+            text-align: center;
+            max-width: 500px;
+            width: 90%;
+            transition: background 0.3s ease;
+        }
+
+        body.dark-theme .container {
+            background: rgba(52, 73, 94, 0.95);
+        }
+
+        /* ===== ЗАГОЛОВОК ===== */
+        h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            font-weight: 600;
+        }
+
+        .subtitle {
+            font-size: 1.1em;
+            opacity: 0.7;
+            margin-bottom: 30px;
+        }
+
+        /* ===== ВЕРХНЯ ПАНЕЛЬ З ПЕРЕМИКАЧАМИ ===== */
+        .top-controls {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 30px;
+            gap: 10px;
+        }
+
+        .control-btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 15px;
+            cursor: pointer;
+            font-size: 0.9em;
+            transition: all 0.3s ease;
+            background: rgba(100, 100, 100, 0.1);
+        }
+
+        .control-btn:hover {
+            transform: scale(1.05);
+            background: rgba(100, 100, 100, 0.2);
+        }
+
+        /* ===== ТАЙМЕР (ВЕЛИКІ ЦИФРИ) ===== */
+        .timer-display {
+            font-size: 6em;
+            font-weight: 300;
+            margin: 30px 0;
+            letter-spacing: 5px;
+        }
+
+        /* ===== СТАТУС СЕСІЇ ===== */
+        .session-status {
+            font-size: 1.3em;
+            margin-bottom: 20px;
+            padding: 10px 20px;
+            border-radius: 20px;
+            display: inline-block;
+            font-weight: 500;
+        }
+
+        /* Кольори для різних типів сесій */
+        .work-session {
+            background: #ffcccb;
+            color: #d63031;
+        }
+
+        .short-break-session {
+            background: #d4f1f4;
+            color: #00b894;
+        }
+
+        .long-break-session {
+            background: #dfe6e9;
+            color: #6c5ce7;
+        }
+
+        body.dark-theme .work-session {
+            background: rgba(214, 48, 49, 0.3);
+            color: #ff7675;
+        }
+
+        body.dark-theme .short-break-session {
+            background: rgba(0, 184, 148, 0.3);
+            color: #55efc4;
+        }
+
+        body.dark-theme .long-break-session {
+            background: rgba(108, 92, 231, 0.3);
+            color: #a29bfe;
+        }
+
+        /* ===== ПРОГРЕС-БАР ===== */
+        .progress-container {
+            width: 100%;
+            height: 10px;
+            background: rgba(0, 0, 0, 0.1);
+            border-radius: 10px;
+            margin: 20px 0;
+            overflow: hidden;
+        }
+
+        .progress-bar {
+            height: 100%;
+            background: linear-gradient(90deg, #ff6b6b, #ee5a6f);
+            border-radius: 10px;
+            transition: width 0.3s ease;
+        }
+
+        /* ===== ЛІЧИЛЬНИК ЦИКЛІВ ===== */
+        .cycles-info {
+            font-size: 1.1em;
+            margin: 20px 0;
+            opacity: 0.8;
+        }
+
+        .cycle-dots {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .cycle-dot {
+            width: 15px;
+            height: 15px;
+            border-radius: 50%;
+            background: rgba(0, 0, 0, 0.2);
+            transition: all 0.3s ease;
+        }
+
+        .cycle-dot.completed {
+            background: #00b894;
+            transform: scale(1.2);
+        }
+
+        /* ===== КНОПКИ УПРАВЛІННЯ ===== */
+        .controls {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            margin-top: 30px;
+        }
+
+        button {
+            padding: 15px 40px;
+            font-size: 1.1em;
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        #startBtn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        #pauseBtn {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            color: white;
+            display: none;
+        }
+
+        #resetBtn {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            color: white;
+        }
+
+        /* ===== АДАПТИВНІСТЬ ДЛЯ МОБІЛЬНИХ ===== */
+        @media (max-width: 600px) {
+            .container {
+                padding: 30px;
+            }
+
+            h1 {
+                font-size: 2em;
+            }
+
+            .timer-display {
+                font-size: 4em;
+            }
+
+            button {
+                padding: 12px 30px;
+                font-size: 1em;
+            }
+
+            .controls {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body class="light-theme">
+    <div class="container">
+        <!-- Верхня панель з перемикачами -->
+        <div class="top-controls">
+            <button class="control-btn" id="themeBtn">🌙 Темна тема</button>
+            <button class="control-btn" id="langBtn">🇬🇧 English</button>
+        </div>
+
+        <!-- Заголовок -->
+        <h1 id="mainTitle">⏰ Pomodoro Timer</h1>
+        <p class="subtitle" id="subtitle">Навчайся ефективно без відволікань</p>
+
+        <!-- Статус поточної сесії -->
+        <div class="session-status work-session" id="sessionStatus">Робоча сесія</div>
+
+        <!-- Великий таймер -->
+        <div class="timer-display" id="timerDisplay">25:00</div>
+
+        <!-- Прогрес-бар -->
+        <div class="progress-container">
+            <div class="progress-bar" id="progressBar" style="width: 0%"></div>
+        </div>
+
+        <!-- Інформація про цикли -->
+        <div class="cycles-info">
+            <span id="cyclesText">Цикл: 1 з 4</span>
+            <div class="cycle-dots" id="cycleDots">
+                <div class="cycle-dot"></div>
+                <div class="cycle-dot"></div>
+                <div class="cycle-dot"></div>
+                <div class="cycle-dot"></div>
+            </div>
+        </div>
+
+        <!-- Кнопки управління -->
+        <div class="controls">
+            <button id="startBtn">▶ Старт</button>
+            <button id="pauseBtn">⏸ Пауза</button>
+            <button id="resetBtn">🔄 Скинути</button>
+        </div>
+    </div>
+
+    <script>
+        // ===== ПЕРЕКЛАДИ ДЛЯ ДВОХ МОВ =====
+        const translations = {
+            uk: {
+                title: '⏰ Pomodoro Timer',
+                subtitle: 'Навчайся ефективно без відволікань',
+                workSession: 'Робоча сесія',
+                shortBreak: 'Коротка перерва',
+                longBreak: 'Довга перерва',
+                cycle: 'Цикл',
+                of: 'з',
+                start: '▶ Старт',
+                pause: '⏸ Пауза',
+                reset: '🔄 Скинути',
+                darkTheme: '🌙 Темна тема',
+                lightTheme: '☀️ Світла тема',
+                language: '🇬🇧 English',
+                timeToWork: 'Час працювати! 💪',
+                timeToRest: 'Час відпочити! ☕',
+                cycleComplete: 'Цикл завершено! 🎉'
+            },
+            en: {
+                title: '⏰ Pomodoro Timer',
+                subtitle: 'Study effectively without distractions',
+                workSession: 'Work Session',
+                shortBreak: 'Short Break',
+                longBreak: 'Long Break',
+                cycle: 'Cycle',
+                of: 'of',
+                start: '▶ Start',
+                pause: '⏸ Pause',
+                reset: '🔄 Reset',
+                darkTheme: '🌙 Dark Theme',
+                lightTheme: '☀️ Light Theme',
+                language: '🇺🇦 Українська',
+                timeToWork: 'Time to work! 💪',
+                timeToRest: 'Time to rest! ☕',
+                cycleComplete: 'Cycle complete! 🎉'
+            }
+        };
+
+        // ===== НАЛАШТУВАННЯ TAЙМЕРА =====
+        const WORK_TIME = 25 * 60; // 25 хвилин у секундах
+        const SHORT_BREAK = 5 * 60; // 5 хвилин
+        const LONG_BREAK = 15 * 60; // 15 хвилин
+        const TOTAL_CYCLES = 4; // Загальна кількість циклів
+
+        // ===== ЗМІННІ СТАНУ =====
+        let timeLeft = WORK_TIME; // Час, що залишився
+        let totalTime = WORK_TIME; // Загальний час сесії
+        let isRunning = false; // Чи працює таймер
+        let currentCycle = 1; // Поточний цикл
+        let sessionType = 'work'; // Тип сесії: work, shortBreak, longBreak
+        let timerInterval = null; // Інтервал для оновлення таймера
+        let currentLang = 'uk'; // Поточна мова
+
+        // ===== ОТРИМАННЯ ЕЛЕМЕНТІВ HTML =====
+        const timerDisplay = document.getElementById('timerDisplay');
+        const progressBar = document.getElementById('progressBar');
+        const startBtn = document.getElementById('startBtn');
+        const pauseBtn = document.getElementById('pauseBtn');
+        const resetBtn = document.getElementById('resetBtn');
+        const sessionStatus = document.getElementById('sessionStatus');
+        const cyclesText = document.getElementById('cyclesText');
+        const cycleDots = document.getElementById('cycleDots');
+        const themeBtn = document.getElementById('themeBtn');
+        const langBtn = document.getElementById('langBtn');
+        const mainTitle = document.getElementById('mainTitle');
+        const subtitle = document.getElementById('subtitle');
+
+        // ===== СТВОРЕННЯ ЗВУКУ ДЛЯ СПОВІЩЕНЬ =====
+        // Створюємо аудіо контекст для генерації звуку
+        const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        
+        function playNotificationSound() {
+            // Створюємо осцилятор (генератор звуку)
+            const oscillator = audioContext.createOscillator();
+            const gainNode = audioContext.createGain();
+            
+            // Налаштування звуку
+            oscillator.connect(gainNode);
+            gainNode.connect(audioContext.destination);
+            
+            oscillator.frequency.value = 800; // Частота звуку
+            oscillator.type = 'sine'; // Тип хвилі
+            
+            // Налаштування гучності
+            gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.5);
+            
+            // Відтворення звуку
+            oscillator.start(audioContext.currentTime);
+            oscillator.stop(audioContext.currentTime + 0.5);
+        }
+
+        // ===== ФУНКЦІЯ ОНОВЛЕННЯ ПЕРЕКЛАДІВ =====
+        function updateTranslations() {
+            const t = translations[currentLang];
+            mainTitle.textContent = t.title;
+            subtitle.textContent = t.subtitle;
+            startBtn.textContent = t.start;
+            pauseBtn.textContent = t.pause;
+            resetBtn.textContent = t.reset;
+            langBtn.textContent = t.language;
+            
+            // Оновлення тексту теми
+            const isDark = document.body.classList.contains('dark-theme');
+            themeBtn.textContent = isDark ? t.lightTheme : t.darkTheme;
+            
+            updateSessionStatus();
+            updateCyclesDisplay();
+        }
+
+        // ===== ФУНКЦІЯ ФОРМАТУВАННЯ ЧАСУ =====
+        // Перетворює секунди у формат MM:SS
+        function formatTime(seconds) {
+            const mins = Math.floor(seconds / 60);
+            const secs = seconds % 60;
+            return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+        }
+
+        // ===== ОНОВЛЕННЯ ВІДОБРАЖЕННЯ ТАЙМЕРА =====
+        function updateDisplay() {
+            timerDisplay.textContent = formatTime(timeLeft);
+            
+            // Оновлення прогрес-бару (скільки % часу пройшло)
+            const progress = ((totalTime - timeLeft) / totalTime) * 100;
+            progressBar.style.width = `${progress}%`;
+        }
+
+        // ===== ОНОВЛЕННЯ СТАТУСУ СЕСІЇ =====
+        function updateSessionStatus() {
+            const t = translations[currentLang];
+            // Видаляємо всі класи
+            sessionStatus.className = 'session-status';
+            
+            // Додаємо відповідний клас та текст
+            if (sessionType === 'work') {
+                sessionStatus.classList.add('work-session');
+                sessionStatus.textContent = t.workSession;
+            } else if (sessionType === 'shortBreak') {
+                sessionStatus.classList.add('short-break-session');
+                sessionStatus.textContent = t.shortBreak;
+            } else if (sessionType === 'longBreak') {
+                sessionStatus.classList.add('long-break-session');
+                sessionStatus.textContent = t.longBreak;
+            }
+        }
+
+        // ===== ОНОВЛЕННЯ ВІДОБРАЖЕННЯ ЦИКЛІВ =====
+        function updateCyclesDisplay() {
+            const t = translations[currentLang];
+            cyclesText.textContent = `${t.cycle}: ${currentCycle} ${t.of} ${TOTAL_CYCLES}`;
+            
+            // Оновлення точок (показує завершені цикли)
+            const dots = cycleDots.querySelectorAll('.cycle-dot');
+            dots.forEach((dot, index) => {
+                if (index < currentCycle - 1) {
+                    dot.classList.add('completed');
+                } else {
+                    dot.classList.remove('completed');
+                }
+            });
+        }
+
+        // ===== СТАРТ ТАЙМЕРА =====
+        function startTimer() {
+            if (isRunning) return; // Якщо вже працює, нічого не робимо
+            
+            isRunning = true;
+            startBtn.style.display = 'none';
+            pauseBtn.style.display = 'inline-block';
+            
+            // Запускаємо інтервал, який оновлює таймер щосекунди
+            timerInterval = setInterval(() => {
+                timeLeft--;
+                updateDisplay();
+                
+                // Збереження стану в localStorage
+                saveState();
+                
+                // Коли час закінчився
+                if (timeLeft <= 0) {
+                    clearInterval(timerInterval);
+                    isRunning = false;
+                    playNotificationSound();
+                    switchSession(); // Переключаємо на наступну сесію
+                }
+            }, 1000);
+        }
+
+        // ===== ПАУЗА ТАЙМЕРА =====
+        function pauseTimer() {
+            isRunning = false;
+            clearInterval(timerInterval);
+            startBtn.style.display = 'inline-block';
+            pauseBtn.style.display = 'none';
+            saveState();
+        }
+
+        // ===== СКИДАННЯ ТАЙМЕРА =====
+        function resetTimer() {
+            isRunning = false;
+            clearInterval(timerInterval);
+            
+            // Скидаємо до початкового стану
+            currentCycle = 1;
+            sessionType = 'work';
+            timeLeft = WORK_TIME;
+            totalTime = WORK_TIME;
+            
+            updateDisplay();
+            updateSessionStatus();
+            updateCyclesDisplay();
+            
+            startBtn.style.display = 'inline-block';
+            pauseBtn.style.display = 'none';
+            
+            saveState();
+        }
+
+        // ===== ПЕРЕМИКАННЯ МІЖ СЕСІЯМИ =====
+        function switchSession() {
+            const t = translations[currentLang];
+            
+            if (sessionType === 'work') {
+                // Після роботи - перерва
+                if (currentCycle >= TOTAL_CYCLES) {
+                    // Довга перерва після 4 циклів
+                    sessionType = 'longBreak';
+                    timeLeft = LONG_BREAK;
+                    totalTime = LONG_BREAK;
+                    alert(t.cycleComplete);
+                } else {
+                    // Коротка перерва
+                    sessionType = 'shortBreak';
+                    timeLeft = SHORT_BREAK;
+                    totalTime = SHORT_BREAK;
+                    alert(t.timeToRest);
+                }
+            } else {
+                // Після перерви - робота
+                if (sessionType === 'longBreak') {
+                    // Після довгої перерви скидаємо цикли
+                    currentCycle = 1;
+                } else {
+                    // Збільшуємо лічильник циклів
+                    currentCycle++;
+                }
+                
+                sessionType = 'work';
+                timeLeft = WORK_TIME;
+                totalTime = WORK_TIME;
+                alert(t.timeToWork);
+            }
+            
+            updateDisplay();
+            updateSessionStatus();
+            updateCyclesDisplay();
+            saveState();
+            
+            // Автоматичний старт наступної сесії
+            startTimer();
+        }
+
+        // ===== ПЕРЕМИКАННЯ ТЕМИ =====
+        function toggleTheme() {
+            const isDark = document.body.classList.toggle('dark-theme');
+            const t = translations[currentLang];
+            themeBtn.textContent = isDark ? t.lightTheme : t.darkTheme;
+            localStorage.setItem('theme', isDark ? 'dark' : 'light');
+        }
+
+        // ===== ПЕРЕМИКАННЯ МОВИ =====
+        function toggleLanguage() {
+            currentLang = currentLang === 'uk' ? 'en' : 'uk';
+            localStorage.setItem('language', currentLang);
+            updateTranslations();
+        }
+
+        // ===== ЗБЕРЕЖЕННЯ СТАНУ В LOCALSTORAGE =====
+        function saveState() {
+            const state = {
+                timeLeft,
+                totalTime,
+                isRunning,
+                currentCycle,
+                sessionType
+            };
+            localStorage.setItem('pomodoroState', JSON.stringify(state));
+        }
+
+        // ===== ЗАВАНТАЖЕННЯ СТАНУ З LOCALSTORAGE =====
+        function loadState() {
+            const savedState = localStorage.getItem('pomodoroState');
+            if (savedState) {
+                const state = JSON.parse(savedState);
+                timeLeft = state.timeLeft;
+                totalTime = state.totalTime;
+                currentCycle = state.currentCycle;
+                sessionType = state.sessionType;
+                
+                updateDisplay();
+                updateSessionStatus();
+                updateCyclesDisplay();
+            }
+            
+            // Завантаження теми
+            const savedTheme = localStorage.getItem('theme');
+            if (savedTheme === 'dark') {
+                document.body.classList.add('dark-theme');
+                themeBtn.textContent = translations[currentLang].lightTheme;
+            }
+            
+            // Завантаження мови
+            const savedLang = localStorage.getItem('language');
+            if (savedLang) {
+                currentLang = savedLang;
+                updateTranslations();
+            }
+        }
+
+        // ===== ДОДАВАННЯ ОБРОБНИКІВ ПОДІЙ =====
+        startBtn.addEventListener('click', startTimer);
+        pauseBtn.addEventListener('click', pauseTimer);
+        resetBtn.addEventListener('click', resetTimer);
+        themeBtn.addEventListener('click', toggleTheme);
+        langBtn.addEventListener('click', toggleLanguage);
+
+        // ===== ІНІЦІАЛІЗАЦІЯ ПРИ ЗАВАНТАЖЕННІ СТОРІНКИ =====
+        window.addEventListener('load', () => {
+            loadState();
+            updateDisplay();
+        });
+
+        // ===== ЗБЕРЕЖЕННЯ СТАНУ ПЕРЕД ЗАКРИТТЯМ ВКЛАДКИ =====
+        window.addEventListener('beforeunload', saveState);
+    </script>
+</body>
+</html>
